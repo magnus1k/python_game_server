@@ -3,7 +3,12 @@
 
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
+from clientmanager import clientManager
+import json
 import sys
+import os
+
+
 print(sys.platform)
 if sys.platform == "linux":
     from twisted.internet import epollreactor
@@ -15,7 +20,8 @@ __author__ = 'Magnus'
 class GameSocket(Protocol):
     #有新用户连接至服务器
     def connectionMade(self):
-        print('New Client')
+        # clientManager.add_client(self.transport.sessionno)
+        print("Client connected:".format(self.transport.sessionno))
 
     #客户端断开连接
     def connectionLost(self, reason):
@@ -33,9 +39,25 @@ class GameSocket(Protocol):
         self.transport.write(outputdata)
 
 
+def load_config():
+    conf_file = open('conf/config.json', encoding='utf-8')
+    config_dict = json.loads(conf_file.read())
+    return config_dict['port'], config_dict['handler']
+
+
+def load_handler():
+    names = os.listdir('handler')
+
+
+
 if __name__ == '__main__':
     f = Factory()
     f.protocol = GameSocket
-    reactor.listenTCP(5200, f)
+    port, handler = load_config()
+    reactor.listenTCP(port, f)
+
+
+    handler_name = "handler/login_0x001.py"
+
     print('server started...')
     reactor.run()
