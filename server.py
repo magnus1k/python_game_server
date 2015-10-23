@@ -4,6 +4,7 @@
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from clientmanager import clientManager
+from handlermanager import handlerManager
 import json
 import sys
 import os
@@ -25,6 +26,7 @@ class GameSocket(Protocol):
 
     #客户端断开连接
     def connectionLost(self, reason):
+        clientManager.logout(self.transport.sessionno)
         print('Lost Client')
 
     #收到客户端发送数据
@@ -34,9 +36,19 @@ class GameSocket(Protocol):
         except UnicodeDecodeError:
             return
         print('Get data:' + incomedata)
+        self.parse_command(incomedata)
         #向该客户端发送数据
-        outputdata = ('发送消息:' + incomedata).encode('utf-8')
-        self.transport.write(outputdata)
+        # outputdata = ('发送消息:' + incomedata).encode('utf-8')
+        # self.transport.write(outputdata)
+
+    def parse_command(self, incomedata):
+        command = json.loads(incomedata)
+        hid = command["cmd"]
+        print(hid)
+        if hid in handlerManager.handlers:
+            msg = handlerManager.handlers[hid].handle(clientManager, self.transport.sessionno,
+                                                      command["arg"])
+            self.transport.write(json.dumps(msg).encode())
 
 
 def load_config():
@@ -45,19 +57,13 @@ def load_config():
     return config_dict['port'], config_dict['handler']
 
 
-def load_handler():
-    names = os.listdir('handler')
-
-
-
 if __name__ == '__main__':
     f = Factory()
     f.protocol = GameSocket
     port, handler = load_config()
     reactor.listenTCP(port, f)
 
-
-    handler_name = "handler/login_0x001.py"
+    handlerManager.load()
 
     print('server started...')
     reactor.run()

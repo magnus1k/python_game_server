@@ -28,6 +28,9 @@ class ClientManager:
             if userclient.password == password:
                 userclient.session_no = session_no
                 userclient.online = True
+                self.online_clients[session_no] = userclient;
+                print("User " + username + " log in")
+                return True
         else:
             newclient = Client()
             newclient.id = len(self.clients) + 1
@@ -35,6 +38,19 @@ class ClientManager:
             newclient.password = password
             newclient.session_no = session_no
             newclient.online = True
+            self.clients[username] = newclient
+            self.online_clients[session_no] = newclient;
+            print("User " + username + " registered")
+            return True
+        return False
+
+    def check_online(self, session_no):
+        return session_no in self.online_clients
+
+    def logout(self, session_no):
+        if session_no in self.online_clients:
+            self.online_clients[session_no].online = False
+            del self.online_clients[session_no]
 
 
 clientManager = ClientManager()

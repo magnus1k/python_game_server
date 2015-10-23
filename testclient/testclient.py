@@ -12,11 +12,14 @@ def conn_to_server():
     conn.connect(("127.0.0.1", 5201))
     protocol = dict()
     protocol["cmd"] = 1
-    protocol["arg"] = {'name': 'test', 'pw': '123321'}
+    protocol["arg"] = {'name': 'test', 'password': '123321'}
     conn.send(json.dumps(protocol).encode())
 
     recv = conn.recv(1024)
-    print("Server Msg:" + recv.decode())
+    print(recv.decode())
+    data = json.loads(recv.decode())
+    if data['cmd'] == 1:
+        print('Result:{0}'.format(data['result']))
     conn.close()
 
 
